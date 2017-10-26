@@ -1,7 +1,7 @@
 ﻿// ***********************************************************************
-// Assembly         : XLabs.Platform.WP8
+// Assembly         : XLabs.Platform.WinUniversal
 // Author           : XLabs Team
-// Created          : 12-27-2015
+// Created          : 01-01-2016
 // 
 // Last Modified By : XLabs Team
 // Last Modified On : 01-04-2016
@@ -20,10 +20,11 @@
 // 
 
 using System;
-using System.Net;
-using System.Threading;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.Phone.Net.NetworkInformation;
+using Windows.Networking;
+using Windows.Networking.Connectivity;
+using Windows.Networking.Sockets;
 
 namespace XLabs.Platform.Services
 {
@@ -51,21 +52,24 @@ namespace XLabs.Platform.Services
         /// <returns>NetworkStatus.</returns>
         public NetworkStatus InternetConnectionStatus()
         {
-            if (DeviceNetworkInformation.IsNetworkAvailable)
+            if (IsConnected)
             {
-                if (DeviceNetworkInformation.IsWiFiEnabled
-                    && NetworkInterface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
-                {
-                    return NetworkStatus.ReachableViaWiFiNetwork;
-                }
+                // 2 for 2G, 3 for 3G, 4 for 4G
+                // 100 for WiFi
+                // 0 for unknown or not connected</returns>
+                var connectionType = GetConnectionGeneration();
 
-                if (NetworkInterface.NetworkInterfaceType == NetworkInterfaceType.MobileBroadbandCdma
-                    || NetworkInterface.NetworkInterfaceType == NetworkInterfaceType.MobileBroadbandGsm)
+                switch (connectionType)
                 {
-                    return NetworkStatus.ReachableViaCarrierDataNetwork;
+                    case 2:
+                    case 3:
+                    case 4:
+                        return NetworkStatus.ReachableViaCarrierDataNetwork;
+                    case 100:
+                        return NetworkStatus.ReachableViaWiFiNetwork;
+                    case 0:
+                        return NetworkStatus.ReachableViaUnknownNetwork;
                 }
-
-                return NetworkStatus.ReachableViaUnknownNetwork;
             }
 
             return NetworkStatus.NotReachable;
@@ -85,7 +89,7 @@ namespace XLabs.Platform.Services
             {
                 if (this.reachabilityChanged == null)
                 {
-                    DeviceNetworkInformation.NetworkAvailabilityChanged += DeviceNetworkInformationNetworkAvailabilityChanged;
+                    Windows.Networking.Connectivity.NetworkInformation.NetworkStatusChanged += NetworkInformationOnNetworkStatusChanged;
                 }
 
                 this.reachabilityChanged += value;
@@ -97,59 +101,12 @@ namespace XLabs.Platform.Services
 
                 if (this.reachabilityChanged == null)
                 {
-                    DeviceNetworkInformation.NetworkAvailabilityChanged -= DeviceNetworkInformationNetworkAvailabilityChanged;
+                    Windows.Networking.Connectivity.NetworkInformation.NetworkStatusChanged -= NetworkInformationOnNetworkStatusChanged;
                 }
             }
         }
 
-        /// <summary>
-        /// Determines whether the specified host is reachable.
-        /// </summary>
-        /// <param name="host">The host.</param>
-        /// <param name="timeout">The timeout.</param>
-        public Task<bool> IsReachable(string host, TimeSpan timeout)
-        {
-            return Task.Run(
-                () =>
-                    {
-                        if (!DeviceNetworkInformation.IsNetworkAvailable)
-                        {
-                            return false;
-                        }
-
-                        var e = new AutoResetEvent(false);
-
-                        var isReachable = false;
-                        NameResolutionCallback d = delegate(NameResolutionResult result)
-                            {
-                                isReachable = result.NetworkErrorCode == NetworkError.Success;
-                                e.Set();
-                            };
-
-                        DeviceNetworkInformation.ResolveHostNameAsync(new DnsEndPoint(host, 0), d, this);
-
-                        e.WaitOne(timeout);
-
-                        return isReachable;
-                    });
-        }
-
-        /// <summary>
-        /// Determines whether [is reachable by wifi] [the specified host].
-        /// </summary>
-        /// <param name="host">The host.</param>
-        /// <param name="timeout">The timeout.</param>
-        public async Task<bool> IsReachableByWifi(string host, TimeSpan timeout)
-        {
-            return (InternetConnectionStatus() == NetworkStatus.ReachableViaWiFiNetwork && await IsReachable(host, timeout));
-        }
-
-        /// <summary>
-        /// Devices the network information network availability changed.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="NetworkNotificationEventArgs"/> instance containing the event data.</param>
-        private void DeviceNetworkInformationNetworkAvailabilityChanged(object sender, NetworkNotificationEventArgs e)
+        private void NetworkInformationOnNetworkStatusChanged(object sender)
         {
             var status = InternetConnectionStatus();
 
@@ -164,6 +121,115 @@ namespace XLabs.Platform.Services
             {
                 handler(status);
             }
+        }
+
+        /// <summary>
+        /// Determines whether the specified host is reachable.
+        /// </summary>
+        /// <param name="host">The host.</param>
+        /// <param name="timeout">The timeout.</param>
+        public async Task<bool> IsReachable(string host, TimeSpan timeout)
+        {
+            var task = Task.Factory.StartNew<bool>(
+                () =>
+                    {
+                        if (NetworkInformation.GetInternetConnectionProfile()?.GetNetworkConnectivityLevel() == NetworkConnectivityLevel.None)
+                        {
+                            return false;
+                        }
+
+                        try
+                        {
+                            var endPointPairListTask = DatagramSocket.GetEndpointPairsAsync(new HostName(host), "0");
+                            
+                            var endPointPairList = endPointPairListTask.GetResults();
+
+                            var endPointPair = endPointPairList.First();
+
+                            return true;
+                        }
+                        catch (Exception)
+                        {
+                        }
+
+                        return false;
+                    });
+
+            return await task;
+        }
+
+        /// <summary>
+        /// Determines whether [is reachable by wifi] [the specified host].
+        /// </summary>
+        /// <param name="host">The host.</param>
+        /// <param name="timeout">The timeout.</param>
+        public async Task<bool> IsReachableByWifi(string host, TimeSpan timeout)
+        {
+            return (InternetConnectionStatus() == NetworkStatus.ReachableViaWiFiNetwork && await IsReachable(host, timeout));
+        }
+
+        private bool IsConnected
+        {
+            get
+            {
+                return
+                    Windows.Networking.Connectivity.NetworkInformation.GetInternetConnectionProfile()?.GetNetworkConnectivityLevel() ==
+                    NetworkConnectivityLevel.InternetAccess;
+            }
+        }
+
+        /// <summary>
+        /// Detect the current connection type
+        /// </summary>
+        /// <returns>
+        /// 2 for 2G, 3 for 3G, 4 for 4G
+        /// 100 for WiFi
+        /// 0 for unknown or not connected</returns>
+        internal static byte GetConnectionGeneration()
+        {
+            ConnectionProfile profile = NetworkInformation.GetInternetConnectionProfile();
+            if (profile.IsWwanConnectionProfile)
+            {
+                WwanDataClass connectionClass = profile.WwanConnectionProfileDetails.GetCurrentDataClass();
+                switch (connectionClass)
+                {
+                    //2G-equivalent
+                    case WwanDataClass.Edge:
+                    case WwanDataClass.Gprs:
+                        return 2;
+
+                    //3G-equivalent
+                    case WwanDataClass.Cdma1xEvdo:
+                    case WwanDataClass.Cdma1xEvdoRevA:
+                    case WwanDataClass.Cdma1xEvdoRevB:
+                    case WwanDataClass.Cdma1xEvdv:
+                    case WwanDataClass.Cdma1xRtt:
+                    case WwanDataClass.Cdma3xRtt:
+                    case WwanDataClass.CdmaUmb:
+                    case WwanDataClass.Umts:
+                    case WwanDataClass.Hsdpa:
+                    case WwanDataClass.Hsupa:
+                        return 3;
+
+                    //4G-equivalent
+                    case WwanDataClass.LteAdvanced:
+                        return 4;
+
+                    //not connected
+                    case WwanDataClass.None:
+                        return 0;
+
+                    //unknown
+                    case WwanDataClass.Custom:
+                    default:
+                        return 0;
+                }
+            }
+            else if (profile.IsWlanConnectionProfile)
+            {
+                return 100;
+            }
+            return 0;
         }
     }
 }

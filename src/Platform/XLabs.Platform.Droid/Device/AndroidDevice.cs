@@ -2,7 +2,7 @@
 // Assembly         : XLabs.Platform.Droid
 // Author           : XLabs Team
 // Created          : 12-27-2015
-// 
+//
 // Last Modified By : XLabs Team
 // Last Modified On : 01-04-2016
 // ***********************************************************************
@@ -12,12 +12,12 @@
 // <summary>
 //       This project is licensed under the Apache 2.0 license
 //       https://github.com/XLabs/Xamarin-Forms-Labs/blob/master/LICENSE
-//       
-//       XLabs is a open source project that aims to provide a powerfull and cross 
+//
+//       XLabs is a open source project that aims to provide a powerfull and cross
 //       platform set of controls tailored to work with Xamarin Forms.
 // </summary>
 // ***********************************************************************
-// 
+//
 
 using System;
 using System.IO;
@@ -55,7 +55,7 @@ namespace XLabs.Platform.Device
         private INetwork network;
 
         /// <summary>
-        /// Creates a default instance of <see cref="AndroidDevice"/>. 
+        /// Creates a default instance of <see cref="AndroidDevice"/>.
         /// </summary>
         public AndroidDevice()
         {
@@ -347,9 +347,9 @@ namespace XLabs.Platform.Device
         /// Gets the total memory in bytes.
         /// </summary>
         /// <value>The total memory in bytes.</value>
-        public long TotalMemory 
+        public long TotalMemory
         {
-            get 
+            get
             {
                 return DeviceTotalMemory;
             }
@@ -367,7 +367,7 @@ namespace XLabs.Platform.Device
                 }
             }
 
-            using (var reader = new RandomAccessFile("/proc/meminfo", "r")) 
+            using (var reader = new RandomAccessFile("/proc/meminfo", "r"))
             {
                 var line = reader.ReadLine(); // first line --> MemTotal: xxxxxx kB
                 var split = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);

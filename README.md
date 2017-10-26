@@ -1,9 +1,11 @@
 ﻿**Xamarin Forms Labs** [![Build status](https://ci.appveyor.com/api/projects/status/33q2u1d3dpn3abgn?svg=true)](https://ci.appveyor.com/project/xlabs/xamarin-forms-labs)
 =====================
 
-[![Build status](https://ci.appveyor.com/api/projects/status/33q2u1d3dpn3abgn?svg=true)](https://ci.appveyor.com/project/xlabs/xamarin-forms-labs)
+[![Build status](https://ci.appveyor.com/api/projects/status/v6dqbuurg2ltihoq?svg=true)](https://ci.appveyor.com/project/ravensorb/xamarin-forms-labs)
 
 **XLabs** is a open source project that aims to provide a powerful and cross platform set of services and controls tailored to work with Xamarin and [Xamarin Forms](http://xamarin.com/forms).
+
+##NOTICE: This project is no longer maintained. It may not work with newer versions of Xamarin.Forms. 
 
 Call for action for all Xamarin Developers, embrace this project and share your controls and services with the community, add your own control to the toolkit.
 
@@ -114,7 +116,7 @@ Or from your codebehind:
     var button = new ImageButton() {
                 ImageHeightRequest = 50,
                 ImageWidthRequest = 50,
-                Orientation = Orientation.ImageToLeft,
+                Orientation = ImageOrientation.ImageToLeft,
                 Source = "icon_twitter.png",
                 Text = "Twitter"
             };
@@ -170,17 +172,6 @@ Do this before using the services
         Resolver.SetResolver (container.GetResolver ());
 
 [For more info on initialization go to the Labs Wiki](https://github.com/XLabs/Xamarin-Forms-Labs/wiki)
-________________
-
-
-**Helper**
-======
-
-> Based in last developments (master)
-
-[Master- XLabs Framework Helper for online use](http://htmlpreview.github.io/?https://raw.githubusercontent.com/XLabs/Xamarin-Forms-Labs/master/Helper/master/Web/Index.html)
-
-[Master - Xamarin.Forms.Labs.chm file for offline use](https://github.com/XLabs/Xamarin-Forms-Labs/blob/master/Helper/master/Xamarin.Forms.Labs.chm)
 ________________
 
 

@@ -1,7 +1,7 @@
 ﻿// ***********************************************************************
-// Assembly         : XLabs.Platform.WP8
+// Assembly         : XLabs.Platform.WinUniversal
 // Author           : XLabs Team
-// Created          : 12-27-2015
+// Created          : 01-01-2016
 // 
 // Last Modified By : XLabs Team
 // Last Modified On : 01-04-2016
@@ -69,10 +69,7 @@ namespace XLabs.Platform.Device
 		/// <value>The address.</value>
 		public string Address
 		{
-			get
-			{
-				return _device.HostName.DisplayName;
-			}
+			get { return string.Empty; }
 		}
 
 		/// <summary>
@@ -103,31 +100,32 @@ namespace XLabs.Platform.Device
 		/// Connects this instance.
 		/// </summary>
 		/// <returns>Task.</returns>
-		public async Task Connect()
+		public Task Connect()
 		{
 			if (_socket != null)
 			{
 				_socket.Dispose();
 			}
 
-			try
-			{
-				_socket = new StreamSocket();
+			//try
+			//{
+			//	_socket = new StreamSocket();
 
-				await _socket.ConnectAsync(_device.HostName, _device.ServiceName);
+			//	await _socket.ConnectAsync(_device.HostName, _device.ServiceName);
 
-				//return true;
-			}
-			catch //(Exception ex)
-			{
-				if (_socket != null)
-				{
-					_socket.Dispose();
-					_socket = null;
-				}
+			//	//return true;
+			//}
+			//catch //(Exception ex)
+			//{
+			//	if (_socket != null)
+			//	{
+			//		_socket.Dispose();
+			//		_socket = null;
+			//	}
 
-				throw;
-			}
+			//	throw;
+			//}
+			throw new NotImplementedException();
 		}
 
 		/// <summary>

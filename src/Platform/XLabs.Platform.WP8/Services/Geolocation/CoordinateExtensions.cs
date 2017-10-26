@@ -1,7 +1,7 @@
 ﻿// ***********************************************************************
-// Assembly         : XLabs.Platform.WP8
+// Assembly         : XLabs.Platform.WinUniversal
 // Author           : XLabs Team
-// Created          : 12-27-2015
+// Created          : 01-01-2016
 // 
 // Last Modified By : XLabs Team
 // Last Modified On : 01-04-2016

@@ -1,7 +1,7 @@
 ﻿// ***********************************************************************
-// Assembly         : XLabs.Platform.WP8
+// Assembly         : XLabs.Platform.WinUniversal
 // Author           : XLabs Team
-// Created          : 12-27-2015
+// Created          : 01-01-2016
 // 
 // Last Modified By : XLabs Team
 // Last Modified On : 01-04-2016
@@ -20,21 +20,27 @@
 // 
 
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.IO.IsolatedStorage;
-using System.Security.Cryptography;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.Storage.Streams;
+using Buffer = Windows.Storage.Streams.Buffer;
 
 namespace XLabs.Platform.Services
 {
     /// <summary>
-    /// Implements <see cref="ISecureStorage"/> for WP using <see cref="IsolatedStorageFile"/> and <see cref="ProtectedData"/>.
+    /// Implements <see cref="ISecureStorage"/> for WP using IsolatedStorageFile and ProtectedData
     /// </summary>
     public class SecureStorage : ISecureStorage
     {
-        private static IsolatedStorageFile File { get { return IsolatedStorageFile.GetUserStoreForApplication(); } }
+        private static Windows.Storage.ApplicationData AppStorage { get {  return ApplicationData.Current; } }
 
-        private readonly byte[] optionalEntropy;
+        //private static readonly DataProtectionProvider _dataProtectionProvider = new DataProtectionProvider();
+
+        private readonly byte[] _optionalEntropy;
 
         /// <summary>
         /// Initializes a new instance of <see cref="SecureStorage"/>.
@@ -42,8 +48,7 @@ namespace XLabs.Platform.Services
         /// <param name="optionalEntropy">Optional password for additional entropy to make encyption more complex.</param>
         public SecureStorage(byte[] optionalEntropy)
         {
-            this.optionalEntropy = optionalEntropy;
-        }
+            this._optionalEntropy = optionalEntropy;					}
 
         /// <summary>
         /// Initializes a new instance of <see cref="SecureStorage"/>.
@@ -60,18 +65,30 @@ namespace XLabs.Platform.Services
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="dataBytes">The data bytes.</param>
-        public void Store(string key, byte[] dataBytes)
+        public async void Store(string key, byte[] dataBytes)
         {
             var mutex = new Mutex(false, key);
 
             try
             {
                 mutex.WaitOne();
-                using (var stream = new IsolatedStorageFileStream(key, FileMode.Create, FileAccess.Write, File))
-                {
-                    var data = ProtectedData.Protect(dataBytes, this.optionalEntropy);
-                    stream.Write(data, 0, data.Length);
-                }
+
+                //var result = await new Windows.Security.Cryptography.DataProtection.DataProtectionProvider().ProtectAsync()
+
+                var buffer = dataBytes.AsBuffer();
+
+                //if (_optionalEntropy != null)
+                //{
+                //    buffer = await _dataProtectionProvider.ProtectAsync(buffer);
+                //}
+
+                var file =
+                    await AppStorage.LocalFolder.CreateFileAsync(key, CreationCollisionOption.ReplaceExisting);
+
+                var stream = await file.OpenStreamForWriteAsync();
+                var byteArray = buffer.ToArray();
+
+                await stream.WriteAsync(byteArray, 0, byteArray.Length);
             }
             finally
             {
@@ -92,17 +109,44 @@ namespace XLabs.Platform.Services
             try
             {
                 mutex.WaitOne();
-                if (!File.FileExists(key))
-                {
-                    throw new Exception(string.Format("No entry found for key {0}.", key));
-                }
 
-                using (var stream = new IsolatedStorageFileStream(key, FileMode.Open, FileAccess.Read, File))
-                {
-                    var data = new byte[stream.Length];
-                    stream.Read(data, 0, data.Length);
-                    return ProtectedData.Unprotect(data, this.optionalEntropy);
-                }
+                var task = Task.Factory.StartNew(async () =>
+                                                     {
+                                                         var file = await AppStorage.LocalFolder.GetFileAsync(key);
+                                                         var stream = await file.OpenReadAsync();
+                                                         var buff = new Buffer(10240);
+                                                         IBuffer bufferResult;
+                                                         var byteResult = new List<byte>();
+
+                                                         do
+                                                         {
+                                                             bufferResult =
+                                                                 await
+                                                                     stream.ReadAsync(buff, 10240,
+                                                                         InputStreamOptions.None);
+
+                                                             if (bufferResult.Length > 0)
+                                                             {
+                                                                 byteResult.AddRange(bufferResult.ToArray());
+                                                             }
+                                                         } while (bufferResult.Length >= stream.Size);
+
+
+                                                         //if (_optionalEntropy != null)
+                                                         //{
+                                                         //    byteResult =
+                                                         //        _dataProtectionProvider.UnprotectAsync(byteResult)
+                                                         //                               .GetResults();
+                                                         //}
+
+                                                         return byteResult.ToArray();
+                                                     });
+
+                return task.Result.Result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("No entry found for key {0}.", key), ex);
             }
             finally
             {
@@ -114,14 +158,17 @@ namespace XLabs.Platform.Services
         /// Deletes the specified key.
         /// </summary>
         /// <param name="key">The key.</param>
-        public void Delete(string key)
+        public async void Delete(string key)
         {
             var mutex = new Mutex(false, key);
 
             try
             {
                 mutex.WaitOne();
-                File.DeleteFile(key);
+
+                var file = await AppStorage.LocalFolder.GetFileAsync(key);
+                
+                await file.DeleteAsync();
             }
             finally
             {
@@ -136,7 +183,17 @@ namespace XLabs.Platform.Services
         /// <returns>True if the storage has the key, otherwise false.</returns>
         public bool Contains(string key)
         {
-            return File.FileExists(key);
+            try
+            {
+                var file = AppStorage.LocalFolder.GetFileAsync(key);
+                file.GetResults();
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         #endregion

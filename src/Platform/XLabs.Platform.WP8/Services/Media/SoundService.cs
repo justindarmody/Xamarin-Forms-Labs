@@ -1,7 +1,7 @@
 // ***********************************************************************
-// Assembly         : XLabs.Platform.WP8
+// Assembly         : XLabs.Platform.WinUniversal
 // Author           : XLabs Team
-// Created          : 12-27-2015
+// Created          : 01-01-2016
 // 
 // Last Modified By : XLabs Team
 // Last Modified On : 01-04-2016
@@ -23,6 +23,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using Windows.Storage;
 
 namespace XLabs.Platform.Services.Media
 {
@@ -37,10 +38,10 @@ namespace XLabs.Platform.Services.Media
         /// </summary>
         private bool isScrubbing;
 
-        /// <summary>
-        /// The _TCS set media
-        /// </summary>
-        private TaskCompletionSource<SoundFile> tcsSetMedia;
+        //// <summary>
+        //// The _TCS set media
+        //// </summary>
+        //private TaskCompletionSource<SoundFile> tcsSetMedia;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SoundService"/> class.
@@ -65,7 +66,7 @@ namespace XLabs.Platform.Services.Media
                     return Application.Current.Resources["GlobalMedia"] as MediaElement;
                 }
 
-                throw new ArgumentNullException("Pre-requisite for use: Add a new MediaElement instance to the System.Windows.Application.Current.Resources dictionary. Do not replace this instance at any point.");
+                throw new ArgumentNullException("Pre-requisite for use: Add a new MediaElement called 'GlobalMedia' instance to the System.Windows.Application.Current.Resources dictionary. Do not replace this instance at any point.");
             }
         }
 
@@ -188,27 +189,19 @@ namespace XLabs.Platform.Services.Media
         /// </summary>
         /// <param name="filename">The filename.</param>
         /// <returns>Task&lt;SoundFile&gt;.</returns>
-        public Task<SoundFile> SetMediaAsync(string filename)
+        public async Task<SoundFile> SetMediaAsync(string filename)
         {
-            this.tcsSetMedia = new TaskCompletionSource<SoundFile>();
-
             CurrentFile = new SoundFile {Filename = filename};
 
-            return Task.Run(() =>
-            {
-                if (Application.GetResourceStream(new Uri(CurrentFile.Filename, UriKind.Relative)) == null)
-                {
-                    MessageBox.Show("File doesn't exist!");
-                }
+            var file = await ApplicationData.Current.LocalFolder.GetFileAsync(CurrentFile.Filename);
 
-                //TODO: need to clean this events
-                GlobalMediaElement.MediaEnded += GlobalMediaElementMediaEnded;
-                GlobalMediaElement.MediaOpened += GlobalMediaElementMediaOpened;
+            //TODO: need to clean this events
+            GlobalMediaElement.MediaEnded += GlobalMediaElementMediaEnded;
+            GlobalMediaElement.MediaOpened += GlobalMediaElementMediaOpened;
 
-                GlobalMediaElement.Source = new Uri(CurrentFile.Filename, UriKind.Relative);
+            GlobalMediaElement.Source = new Uri(CurrentFile.Filename, UriKind.Relative);
 
-                return this.tcsSetMedia.Task;
-            });
+            return CurrentFile;
         }
 
         /// <summary>
@@ -218,18 +211,18 @@ namespace XLabs.Platform.Services.Media
         /// <param name="e">The <see cref="RoutedEventArgs"/> instance containing the event data.</param>
         private void GlobalMediaElementMediaOpened(object sender, RoutedEventArgs e)
         {
-            if (this.tcsSetMedia != null)
-            {
+            //if (this.tcsSetMedia != null)
+            //{
                 CurrentFile.Duration = TimeSpan.FromSeconds(GlobalMediaElement.NaturalDuration.TimeSpan.TotalSeconds);
-                this.tcsSetMedia.SetResult(CurrentFile);
-            }
+                //this.tcsSetMedia.SetResult(CurrentFile);
+            //}
         }
 
         /// <summary>
         /// Handles the MediaEnded event of the player control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.Windows.RoutedEventArgs" /> instance containing the event data.</param>
+        /// <param name="e">The <see cref="RoutedEventArgs" /> instance containing the event data.</param>
         private void GlobalMediaElementMediaEnded(object sender, RoutedEventArgs e)
         {
             OnFileFinished(new SoundFinishedEventArgs(CurrentFile));

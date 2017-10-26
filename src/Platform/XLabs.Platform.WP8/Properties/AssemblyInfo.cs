@@ -1,42 +1,27 @@
-﻿// ***********************************************************************
-// Assembly         : XLabs.Platform.WP8
-// Author           : XLabs Team
-// Created          : 12-27-2015
-// 
-// Last Modified By : XLabs Team
-// Last Modified On : 01-04-2016
-// ***********************************************************************
-// <copyright file="AssemblyInfo.cs" company="XLabs Team">
-//     Copyright (c) XLabs Team. All rights reserved.
-// </copyright>
-// <summary>
-//       This project is licensed under the Apache 2.0 license
-//       https://github.com/XLabs/Xamarin-Forms-Labs/blob/master/LICENSE
-//       
-//       XLabs is a open source project that aims to provide a powerfull and cross 
-//       platform set of controls tailored to work with Xamarin Forms.
-// </summary>
-// ***********************************************************************
-// 
-
-using System.Reflection;
+﻿using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Resources;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-
 [assembly: AssemblyTitle("XLabs.Platform.WP8")]
 [assembly: AssemblyDescription("")]
-[assembly: AssemblyCulture("")]
-[assembly: NeutralResourcesLanguage("en")]
-
-#if !_USE_SHARED_ASSEMBLYINFO
-[assembly: AssemblyCompany("XLabs Team")]
-[assembly: AssemblyProduct("XLabs")]
-[assembly: AssemblyCopyright("Copyright © XLabs Team 2016")]
-[assembly: AssemblyTrademark("")]
 [assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("XLabs.Platform.WP8")]
+[assembly: AssemblyCopyright("Copyright ©  2016")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
+
+// Setting ComVisible to false makes the types in this assembly not visible 
+// to COM components.  If you need to access a type in this assembly from 
+// COM, set the ComVisible attribute to true on that type.
+[assembly: ComVisible(false)]
+
+// The following GUID is for the ID of the typelib if this project is exposed to COM
+[assembly: Guid("7f06cab8-3cdd-414d-ae21-3076a5d15cdc")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -45,12 +30,8 @@ using System.Resources;
 //      Build Number
 //      Revision
 //
-// You can specify all the values or you can default the Build and Revision Numbers 
+// You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("2.0.*")]
-
-//[assembly: AssemblyFileVersion("2.0.*")]
-#endif
-
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-//[assembly: Guid("c721d749-63d9-4da4-acd4-8d028ad0a3d0")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: NeutralResourcesLanguageAttribute("en-US")]
